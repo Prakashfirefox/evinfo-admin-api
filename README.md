@@ -1,2 +1,11 @@
-# evinfo-admin-api
-admin api for evinfo project
+
+
+# Install the dependancies
+
+	npm install
+	
+	npm run dev
+
+
+
+
