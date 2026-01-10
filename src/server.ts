@@ -14,7 +14,7 @@ const app = express();
 const server = require("http").createServer(app);
 
 const corsOptions: cors.CorsOptions = {
-  origin: ["http://localhost:3000"],
+  origin: ["http://localhost:3001", "http://localhost:3000"],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "*"

@@ -115,6 +115,7 @@ export enum ROUTE {
   BLOG_GET_ALL = "/blogs/get-all-blogs",
   BLOG_DELETE = "/blogs/:id",
   BLOG_UPDATE_STATUS = "/blogs/:id/status",
+  BLOG_GET_BY_SLUG = "/blogs/slug/:slug",
 
   //Banner Routes
   BANNER_CREATE = "/banners/create-banner",

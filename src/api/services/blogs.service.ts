@@ -222,6 +222,13 @@ export class BlogsServices {
     return true;
   }
 
+  async getBlogBySlug(slug: string) {
+    const blog = await prisma.blog.findFirst({ where: { slug, is_deleted: false } });
+    if (blog) {
+      return blog;
+    }
+    return false;
+  }
 
 
 

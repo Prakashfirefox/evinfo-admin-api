@@ -157,6 +157,35 @@ class BlogsController {
     }
   }
 
+  // Get Blog by Slug\
+  async getBlogBySlug(req: any, res: any) {
+    try {
+      const { slug } = req.params;
+      console.log("Get Blog by Slug :",slug);
+      if (!slug)
+        throw new AppError(
+          ERROR_MESSAGE.BLOG_SLUG_ALREADY_USED,
+          {
+            data: ERROR_MESSAGE.BLOG_SLUG_ALREADY_USED,
+          },
+          400
+        );
+      const Blog = await BlogsServices.getBlogBySlug(slug);
+      if (!Blog) {
+        throw new AppError(
+          ERROR_MESSAGE.BLOG_NOT_FOUND,
+          {
+            data: ERROR_MESSAGE.BLOG_NOT_FOUND,
+          },
+          400
+        );
+      } 
+      Responser.success(res, true, SUCCESS_MESSAGES.BLOGS_FETCHED_SUCCESS, { Blog}, 200);
+    } catch (error) {
+      Responser.error(res, false, error);
+    }
+  }
+  
 
 
 

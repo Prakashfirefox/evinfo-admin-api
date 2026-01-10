@@ -29,20 +29,20 @@ router.get(ROUTE.AUTH_GET_USER, authenticateJWT, adminController.getUserById)
 router.post(ROUTE.AUTH_GET_ALL_USER, authenticateJWT, validateRequest(UserValidations.getAllUsersValidation), adminController.getAllUsers);
 router.patch(ROUTE.AUTH_UPDATE_USER_STATUS, authenticateJWT, validateRequest(UserValidations.updateUserStatus), adminController.updateUserStatus);
 
-//organization Routes
+//Blogs Routes
 router.post(ROUTE.BLOG_CREATE, authenticateJWT, validateRequest(OrganizationValidations.createOrganizationValidation), BlogsController.createBlog);
 router.get(ROUTE.BLOG_GET, authenticateJWT,  BlogsController.getBlogById);
-
 router.put(ROUTE.BLOG_UPDATE, authenticateJWT,  BlogsController.updateBlog);
-router.post(ROUTE.BLOG_GET_ALL, authenticateJWT,  BlogsController.getAllBlogs);
+router.post(ROUTE.BLOG_GET_ALL,  BlogsController.getAllBlogs);
 router.delete(ROUTE.BLOG_DELETE, authenticateJWT, BlogsController.deleteBlog);
 router.patch(ROUTE.BLOG_UPDATE_STATUS, authenticateJWT,  BlogsController.updateBlogStatus);
+router.get(ROUTE.BLOG_GET_BY_SLUG,  BlogsController.getBlogBySlug);
 
 //Banner Routes
 router.post(ROUTE.BANNER_CREATE, authenticateJWT,  BannerController.createBanner);
 router.get(ROUTE.BANNER_GET, authenticateJWT,  BannerController.getBannerById);
 router.put(ROUTE.BANNER_UPDATE, authenticateJWT,  BannerController.updateBanner);
-router.post(ROUTE.BANNER_GET_ALL, authenticateJWT,  BannerController.getAllBanners);
+router.post(ROUTE.BANNER_GET_ALL,  BannerController.getAllBanners);
 router.delete(ROUTE.BANNER_DELETE, authenticateJWT, BannerController.deleteBanner);
 router.patch(ROUTE.BANNER_UPDATE_STATUS, authenticateJWT,  BannerController.updateBannerStatus);
 export default router;
