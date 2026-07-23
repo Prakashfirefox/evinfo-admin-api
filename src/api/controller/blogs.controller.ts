@@ -146,7 +146,7 @@ class BlogsController {
           },
           400
         );
-      const { status } = req.body as BlogsInterfaces.UpdateBlogsStatus
+      const { status } = req.body as BlogsInterfaces.UpdateBlogStatusPayload
       const result = await BlogsServices.updateBlogStatus(id, status, req.authUsersDetails);
       if (result) {
         Responser.success(res, true, SUCCESS_MESSAGES.BLOG_STATUS_UPDATED_SUCCESS, {}, 200);
@@ -170,8 +170,8 @@ class BlogsController {
           },
           400
         );
-      const Blog = await BlogsServices.getBlogBySlug(slug);
-      if (!Blog) {
+      const blog = await BlogsServices.getBlogBySlug(slug);
+      if (!blog) {
         throw new AppError(
           ERROR_MESSAGE.BLOG_NOT_FOUND,
           {
@@ -180,7 +180,8 @@ class BlogsController {
           400
         );
       } 
-      Responser.success(res, true, SUCCESS_MESSAGES.BLOGS_FETCHED_SUCCESS, { Blog}, 200);
+      console.log("Blog found by slug:", blog);
+      Responser.success(res, true, SUCCESS_MESSAGES.BLOGS_FETCHED_SUCCESS, { blog }, 200);
     } catch (error) {
       Responser.error(res, false, error);
     }

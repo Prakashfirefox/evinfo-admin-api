@@ -95,3 +95,13 @@ export type UserStatusType =
 export interface UpdateUserStatus {
   status: UserStatusType;
 }
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  email: string;
+  new_password: string;
+}

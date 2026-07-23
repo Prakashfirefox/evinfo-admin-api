@@ -1,12 +1,14 @@
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import express from "express";
-import AdminRoutes from "./api/routes/v1/admin";
+import AdminRoutes from "./api/routes/v1/index";
 import SERVER from "./config/config";
 import helmet from "helmet";
 import prisma from "./db/client";
 import cors from "cors";
 import logger from "./api/utils/logger";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./swagger/index";
 
 dotenv.config();
 
@@ -14,7 +16,7 @@ const app = express();
 const server = require("http").createServer(app);
 
 const corsOptions: cors.CorsOptions = {
-  origin: ["http://localhost:3001", "http://localhost:3000"],
+  origin: ["http://localhost:3001", "http://localhost:3000","http://localhost:3002"],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "*"
@@ -29,6 +31,22 @@ app.use(cors(corsOptions));
 app.set("port", SERVER.SERVER.port);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+// Swagger UI — available at /api-docs
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "EVinfo Admin API Docs",
+    swaggerOptions: { persistAuthorization: true },
+  })
+);
+
+// Swagger JSON spec endpoint
+app.get("/api-docs.json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 
 app.get("/", (_req, res) => {
   res.send("Welcome to EVinfo, API is Running successfully on Dev server....");

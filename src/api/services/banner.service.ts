@@ -40,10 +40,10 @@ class BannerService {
 
     async getAllBanners(payload: BannerInterfaces.GetAllBannersPayload) {
         const { search, offset = 0, limit = 10, status } = payload;
-
+        console.log("Get All Banners Payload:", payload);
         const where: any = { is_deleted: false };
 
-        if (status) where.status = status;
+        if (status ) where.status = status;
 
         if (search) {
             where.OR = [
@@ -153,6 +153,105 @@ class BannerService {
 
         return true;
     }
+    async getBannerBySlug(slug: string) {
+        return prisma.banner.findFirst({
+            where: { slug, is_deleted: false, status: "active" },
+        });
+    }
+    async getActiveBanners(payload: any) {
+        const { position, limit = 10, offset = 0 } = payload;
+        const now = new Date();
+
+        const where: any = {
+            is_deleted: false,
+            status: "active",
+            OR: [
+                {
+                    AND: [
+                        { start_date: { lte: now } },
+                        { end_date: { gte: now } }
+                    ]
+                },
+                {
+                    AND: [
+                        { start_date: null },
+                        { end_date: null }
+                    ]
+                }
+            ]
+        };
+
+        if (position) {
+            where.position = position;
+        }
+
+        const rows = await prisma.banner.findMany({
+            where,
+            skip: offset,
+            take: limit,
+            orderBy: [{ priority: "asc" }, { created_at: "desc" }],
+        });
+
+        const count = await prisma.banner.count({ where });
+
+        return { rows, count };
+    }
+
+    // NEW: Get banners by position
+    async getBannersByPosition(position: string, payload: any) {
+        const { offset = 0, limit = 10, status } = payload;
+
+        const where: any = {
+            position,
+            is_deleted: false
+        };
+
+        if (status) where.status = status;
+
+        const rows = await prisma.banner.findMany({
+            where,
+            skip: offset,
+            take: limit,
+            orderBy: [{ priority: "asc" }, { created_at: "desc" }],
+        });
+
+        const count = await prisma.banner.count({ where });
+
+        return { rows, count };
+    }
+    async updateBannerPriority(id: string, priority: number, authUser: any) {
+        const banner = await prisma.banner.findFirst({
+            where: { id, is_deleted: false },
+        });
+
+        if (!banner)
+            throw new AppError(ERROR_MESSAGE.BANNER_NOT_FOUND, {}, 400);
+
+        return prisma.banner.update({
+            where: { id },
+            data: {
+                priority,
+                updated_by: authUser.id,
+                updated_at: new Date(),
+            },
+        });
+    }
+    async bulkUpdateBannerStatus(bannerIds: string[], status: BannerInterfaces.BannerStatus, authUser: any) {
+        const result = await prisma.banner.updateMany({
+            where: {
+                id: { in: bannerIds },
+                is_deleted: false
+            },
+            data: {
+                status,
+                updated_by: authUser.id,
+                updated_at: new Date(),
+            },
+        });
+
+        return { updatedCount: result.count };
+    }
+
 }
 
 export default new BannerService();

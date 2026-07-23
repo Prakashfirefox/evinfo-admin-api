@@ -11,13 +11,20 @@
     "start": "nodemon --config nodemon.json src/server.ts",
     "dev": "nodemon --config nodemon.json src/server.ts",
     "build": "rimraf dist && concurrently --handle-input \" npm run tsc\" ",
-    "deploy": "node dist/src/server.js",
-    "watch-deploy": "nodemon dist/src/server.js",
-    "start:dev": "rimraf dist && concurrently --handle-input \"tsc -w -p tsconfig.json\" \"wait-on dist/server.js && nodemon dist/server.js\""
+    "deploy": "node dist/server.js",
+    "watch-deploy": "nodemon dist/server.js",
+    "start:dev": "rimraf dist && concurrently --handle-input \"tsc -w -p tsconfig.json\" \"wait-on dist/server.js && nodemon dist/server.js\"",
+    "seed": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts",
+    "db:clear": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/clear.ts"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "@sendgrid/mail": "^8.1.6",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "bcryptjs": "^3.0.3",
     "class-validator": "^0.14.1",
     "concurrently": "^9.1.1",
@@ -35,8 +42,11 @@
     "nodemon": "^3.1.7",
     "prisma": "^6.19.0",
     "rimraf": "^6.0.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "typescript": "^5.9.3",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.5",

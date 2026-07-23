@@ -267,6 +267,27 @@ async verifyOtp (req: any, res: any) {
   //     Responser.error(res, false, error);
   //   }
   // }
+  async forgotPassword(req: any, res: any) {
+    try {
+      const { email } = req.body as UserInterfaces.ForgotPasswordPayload;
+      await AuthServices.forgotPassword(email);
+      // Always return 200 — never reveal whether the email exists
+      Responser.success(res, true, SUCCESS_MESSAGES.FORGOT_PASSWORD_EMAIL_SENT, {}, 200);
+    } catch (error: any) {
+      Responser.error(res, false, error);
+    }
+  }
+
+  async resetPassword(req: any, res: any) {
+    try {
+      const { token, email, new_password } = req.body as UserInterfaces.ResetPasswordPayload;
+      await AuthServices.resetPassword(email, token, new_password);
+      Responser.success(res, true, SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS, {}, 200);
+    } catch (error: any) {
+      Responser.error(res, false, error);
+    }
+  }
+
   //update User Status
   async updateUserStatus(req: any, res: any) {
     try {

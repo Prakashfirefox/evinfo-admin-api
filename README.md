@@ -8,4 +8,12 @@
 
 
 
+# Run CMD
+npm start	
+npm run build	
+npm run deploy	
+npm run seed	
+npm run db:clear	
+
+
 

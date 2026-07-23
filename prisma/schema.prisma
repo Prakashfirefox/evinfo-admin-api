@@ -1,8 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Database: MongoDB
+// Hierarchy: Brand → VehicleModel → Variant → SubVariant
+// SubVariant is the final sellable unit; display name is generated dynamically:
+//   Brand.name + VehicleModel.name + Variant.name + SubVariant.name
 
 datasource db {
   provider = "mongodb"
@@ -13,7 +12,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 3. USERS
+// ─── Users ────────────────────────────────────────────────────────────────────
 model Users {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   password       String
@@ -38,9 +37,14 @@ model Users {
   otp            String?   @default("")
   otp_verified   Boolean   @default(false)
   email_verified Boolean   @default(false)
-  refresh_token  String?
-  last_logout    DateTime?
-  is_deleted     Boolean   @default(false)
+  phone_otp      String?
+  phone_verified Boolean   @default(false)
+  otp_expires_at DateTime?
+  refresh_token               String?
+  last_logout                 DateTime?
+  password_reset_token        String?
+  password_reset_token_expiry DateTime?
+  is_deleted                  Boolean   @default(false)
   role           String?
   created_by     String?
   updated_by     String?
@@ -48,51 +52,34 @@ model Users {
   updated_at     DateTime? @default(now())
   status         String?   @default("new")
 
-  // Relation (virtual for MongoDB)
   blogs Blog[] @relation("UserBlogs")
 
   @@map("users")
 }
 
+// ─── Blog ─────────────────────────────────────────────────────────────────────
 model Blog {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  // Basic
-  title       String
-  slug        String   @unique
-  excerpt     String?
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  slug         String      @unique
+  excerpt      String?
   cover_images String[]
-
-  // Author (embedded)
-  author_id   String?
-
-  // Categorization
-  categories Categories[] @default([evs])
-  tags       String[]
-
-  // Blog Sections (embedded array)
-  sections BlogSection[]
-
-  // SEO (embedded)
-  seo BlogSEO?
-
-  // Status
-  status    BlogStatus @default(draft)
-  featured  Boolean    @default(false)
-  view_count Int        @default(0)
-
-  // Publishing
-  published   Boolean   @default(false)
+  author_id    String?
+  categories   Categories[] @default([evs])
+  tags         String[]
+  sections     BlogSection[]
+  seo          BlogSEO?
+  status       BlogStatus  @default(draft)
+  featured     Boolean     @default(false)
+  view_count   Int         @default(0)
+  published    Boolean     @default(false)
   published_at DateTime?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  created_by   String?
+  updated_by   String?
+  is_deleted   Boolean     @default(false)
 
-  // Timestamps
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  created_by String?
-  updated_by String?
-  is_deleted Boolean @default(false)
-
-  // virtual relation (no foreign keys in MongoDB)
   user Users? @relation("UserBlogs", fields: [author_id], references: [id])
 
   @@map("blogs")
@@ -100,17 +87,17 @@ model Blog {
 
 enum Categories {
   evs
-  AutoMoobiles
-  Technology
-  Lifestyle
-  Business
+  automobiles
+  technology
+  lifestyle
+  business
   Health
-  Travel
-  Education
-  Entertainment
-  Food
-  Fashion
-  Sports
+  travel
+  education
+  entertainment
+  food
+  fashion
+  sports
 }
 
 enum BlogStatus {
@@ -120,6 +107,7 @@ enum BlogStatus {
 }
 
 type BlogSection {
+  id      String
   heading String?
   content String?
   images  String[]
@@ -132,26 +120,21 @@ type BlogSEO {
   keywords        String[]
 }
 
+// ─── Banner ───────────────────────────────────────────────────────────────────
 model Banner {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
   title        String
-  slug         String   @unique
+  slug         String    @unique
   image_url    String
   redirect_url String?
-  position     String?   // HOME_TOP, HOME_MIDDLE, POPUP, etc
+  position     String?   // HOME_TOP | HOME_MIDDLE | SIDEBAR | POPUP
   priority     Int       @default(0)
-
   status       String    @default("active") // active | inactive
-
   start_date   DateTime?
   end_date     DateTime?
-
   is_deleted   Boolean   @default(false)
-
   created_by   String?   @db.ObjectId
   updated_by   String?   @db.ObjectId
-
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 
@@ -159,4 +142,447 @@ model Banner {
   @@index([priority])
   @@index([start_date, end_date])
   @@index([is_deleted])
+  @@map("banners")
+}
+
+// ─── Brand ────────────────────────────────────────────────────────────────────
+model Brand {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String         @unique
+  name        String
+  logo        String
+  country     String?
+  founded     Int?
+  description String?
+  website     String?
+
+  models      VehicleModel[]
+
+  status      String         @default("active") // active | discontinued
+  created_by  String?        @db.ObjectId
+  updated_by  String?        @db.ObjectId
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+  is_deleted  Boolean        @default(false)
+
+  @@map("brands")
+}
+
+// ─── VehicleModel ─────────────────────────────────────────────────────────────
+model VehicleModel {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  slug             String          @unique
+  name             String
+  generation       String?
+  body_type        String?         // Sedan | SUV | Hatchback | Coupe | MPV | Crossover | Truck | Van
+  production_years String?         // e.g. "2018–present"
+  platform         String?
+  description      String?
+
+  timeline         TimelineEvent[] // Model history events
+
+  brand_id         String          @db.ObjectId
+  brand            Brand           @relation(fields: [brand_id], references: [id])
+  variants         Variant[]
+
+  status           String          @default("active") // active | discontinued
+  featured         Boolean         @default(false)
+  created_by       String?         @db.ObjectId
+  updated_by       String?         @db.ObjectId
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+  is_deleted       Boolean         @default(false)
+
+  @@index([brand_id])
+  @@index([status])
+  @@map("vehicle_models")
+}
+
+// ─── Variant ──────────────────────────────────────────────────────────────────
+// Represents a trim level, e.g. "Creta SX", "Seltos HTX+"
+model Variant {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  slug             String        @unique
+  name             String        // e.g. "SX", "ZX+", "Base"
+  trim             String?
+  launch_year      Int?
+  production_status String?      // in-production | discontinued | upcoming
+  segment          String?       // Budget | Mid | Premium | Luxury
+  description      String?
+
+  // Color options for this variant (shared across its sub-variants)
+  colors           Color[]
+
+  // Cover image used in listing cards
+  cover_image      String?
+
+  // Competing variants (cross-brand / same segment)
+  competitor_ids   String[]      @db.ObjectId
+
+  model_id         String        @db.ObjectId
+  model            VehicleModel  @relation(fields: [model_id], references: [id])
+  sub_variants     SubVariant[]
+
+  status           String        @default("active") // active | discontinued | upcoming
+  featured         Boolean       @default(false)
+  view_count       Int           @default(0)
+
+  created_by       String?       @db.ObjectId
+  updated_by       String?       @db.ObjectId
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+  is_deleted       Boolean       @default(false)
+
+  @@index([model_id])
+  @@index([status])
+  @@map("variants")
+}
+
+// ─── SubVariant ───────────────────────────────────────────────────────────────
+// The final sellable unit, e.g. "Petrol MT", "Diesel AT", "Long Range AWD"
+// Full display name = Brand + Model + Variant + SubVariant (generated at runtime)
+model SubVariant {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug         String   @unique // e.g. hyundai-creta-sx-petrol-mt
+  name         String           // e.g. "Petrol MT", "Diesel AT"
+
+  variant_id   String   @db.ObjectId
+  variant      Variant  @relation(fields: [variant_id], references: [id])
+
+  // Powertrain identity
+  fuel_type    String           // Petrol | Diesel | EV | Hybrid | CNG | PHEV
+  transmission String           // Manual | Automatic | CVT | AMT | DCT
+  engine       String?          // e.g. "1.5L VTVT", "2.0L Smartstream"
+  drivetrain   String?          // FWD | RWD | AWD | 4WD | 4x4
+
+  // Ownership / after-sales info
+  ownership    OwnershipInfo?
+
+  // Relations to separate collections
+  pricing      Pricing[]
+  specs        Specifications[]
+  reviews      Review[]
+
+  view_count   Int      @default(0)
+  status       String   @default("active") // active | discontinued | upcoming
+
+  created_by   String?  @db.ObjectId
+  updated_by   String?  @db.ObjectId
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  is_deleted   Boolean  @default(false)
+
+  @@index([variant_id])
+  @@index([fuel_type])
+  @@index([transmission])
+  @@index([status])
+  @@map("sub_variants")
+}
+
+// ─── Pricing ──────────────────────────────────────────────────────────────────
+// Supports location-based pricing (city = null → national base price)
+model Pricing {
+  id                String     @id @default(auto()) @map("_id") @db.ObjectId
+
+  sub_variant_id    String     @db.ObjectId
+  sub_variant       SubVariant @relation(fields: [sub_variant_id], references: [id])
+
+  city              String?    // null = national / base price
+  state             String?
+
+  ex_showroom_price Float
+  on_road_price     Float?
+  insurance         Float?
+  registration      Float?
+  tcs_tax           Float?     // TCS / road tax
+
+  financing         FinancingInfo?
+
+  is_active         Boolean    @default(true)
+
+  created_by        String?    @db.ObjectId
+  updated_by        String?    @db.ObjectId
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+
+  @@index([sub_variant_id])
+  @@index([city])
+  @@index([sub_variant_id, city])
+  @@map("pricing")
+}
+
+// ─── Specifications ───────────────────────────────────────────────────────────
+// One record per sub-variant; battery field only populated for EVs / PHEVs
+model Specifications {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+
+  sub_variant_id String     @db.ObjectId
+  sub_variant    SubVariant @relation(fields: [sub_variant_id], references: [id])
+
+  performance    PerformanceSpecs?
+  battery        BatterySpecs?     // EVs / PHEVs only
+  dimensions     DimensionSpecs?
+  interior       InteriorSpecs?
+  safety         SafetySpecs?
+  wheels         WheelSpecs?
+  features       FeatureSpecs?
+
+  created_by     String?    @db.ObjectId
+  updated_by     String?    @db.ObjectId
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
+
+  @@index([sub_variant_id])
+  @@map("specifications")
+}
+
+// ─── ContactMessage ───────────────────────────────────────────────────────────
+// Enquiries submitted through the public website contact form
+model ContactMessage {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String
+  subject    String?
+  message    String
+  status     String   @default("new") // new | read | resolved
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  is_deleted Boolean  @default(false)
+
+  @@index([status])
+  @@map("contact_messages")
+}
+
+// ─── Review ───────────────────────────────────────────────────────────────────
+model Review {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+
+  sub_variant_id String     @db.ObjectId
+  sub_variant    SubVariant @relation(fields: [sub_variant_id], references: [id])
+
+  user_id        String?    @db.ObjectId
+  rating         Float
+  title          String?
+  content        String?
+  pros           String[]
+  cons           String[]
+
+  status         String     @default("pending") // pending | approved | rejected
+  helpful_count  Int        @default(0)
+
+  created_by     String?    @db.ObjectId
+  updated_by     String?    @db.ObjectId
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
+  is_deleted     Boolean    @default(false)
+
+  @@index([sub_variant_id])
+  @@index([status])
+  @@map("reviews")
+}
+
+// ─── Dealer ───────────────────────────────────────────────────────────────────
+model Dealer {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  address     String
+  city        String
+  state       String
+  country     String
+  pincode     String?
+  phone       String?
+  email       String?
+  website     String?
+  coordinates Location?
+  brands      String[]  // Brand IDs (denormalised for geo queries)
+  services    String[]
+  rating      Float?
+  status      String    @default("active")
+  created_by  String?   @db.ObjectId
+  updated_by  String?   @db.ObjectId
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  is_deleted  Boolean   @default(false)
+
+  @@index([city, state])
+  @@index([status])
+  @@map("dealers")
+}
+
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+// entity_type: "model" | "variant" | "sub_variant"
+// category for images: exterior | interior | top_view | side_view | front_view | rear_view | 360 | color | detail | other
+// category for videos: review | promo | walkaround | feature_highlight | other
+model Gallery {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  entity_type String   // "model" | "variant" | "sub_variant"
+  entity_id   String   @db.ObjectId
+  media_type  String   // "image" | "video"
+  category    String   @default("exterior")
+  url         String
+  thumbnail   String?
+  title       String?
+  description String?
+  order       Int      @default(0)
+  is_primary  Boolean  @default(false)
+  created_by  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  is_deleted  Boolean  @default(false)
+
+  @@index([entity_type, entity_id])
+  @@index([media_type])
+  @@map("gallery")
+}
+
+// ─── BlogLink ─────────────────────────────────────────────────────────────────
+// linked_type: "brand" | "model" | "variant" | "sub_variant"
+model BlogLink {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  blog_id     String   @db.ObjectId
+  linked_type String   // "brand" | "model" | "variant" | "sub_variant"
+  linked_id   String   @db.ObjectId
+  created_at  DateTime @default(now())
+  created_by  String?
+
+  @@index([blog_id])
+  @@index([linked_type, linked_id])
+  @@map("blog_links")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EMBEDDED / COMPOSITE TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Color {
+  id           String
+  name         String
+  hex_code     String
+  image_url    String?
+  price_delta  Float?    // Extra cost over base price (null = included)
+  type         String?   // standard | metallic | pearlescent | matte | satin
+  is_available Boolean?  @default(true)
+}
+
+type FinancingInfo {
+  emi          String?
+  down_payment String?
+  tenure       String?   // e.g. "60 months"
+  interest     Float?
+}
+
+type OwnershipInfo {
+  warranty         String?
+  battery_warranty String?  // EV / PHEV specific
+  service_interval String?
+  maintenance_cost String?
+  roadside_assist  Boolean?
+  service_centers  Int?
+}
+
+type TimelineEvent {
+  year        Int
+  event       String
+  description String?
+}
+
+type Location {
+  lat Float
+  lng Float
+}
+
+// ── Specification sub-types ───────────────────────────────────────────────────
+
+type PerformanceSpecs {
+  acceleration     String?  // 0–100 km/h time
+  top_speed        String?
+  power            String?  // bhp or kW
+  torque           String?  // Nm
+  fuel_efficiency  String?  // kmpl or km/charge
+  traction_control Boolean?
+  launch_control   Boolean?
+}
+
+type BatterySpecs {
+  capacity      String?  // kWh
+  type          String?  // Li-Ion | LFP | NMC
+  voltage       String?
+  range         String?  // WLTP / ARAI
+  range_city    String?
+  range_highway String?
+  efficiency    String?  // Wh/km
+  charging      ChargingSpecs?
+}
+
+type ChargingSpecs {
+  ac             String?  // kW
+  dc             String?  // kW
+  time_10to80    String?
+  time_0to100    String?
+  connector_type String?  // CCS2 | CHAdeMO | Type2 | GB/T
+  port_location  String?
+}
+
+type DimensionSpecs {
+  length              String?  // mm
+  width               String?
+  height              String?
+  wheelbase           String?
+  ground_clearance    String?
+  kerb_weight         String?  // kg
+  gross_weight        String?
+  turning_radius      String?
+  boot_space          String?  // litres
+  fuel_tank           String?  // litres (null for BEVs)
+}
+
+type InteriorSpecs {
+  seating            Int?
+  seating_material   String?
+  upholstery         String?
+  dashboard          String?
+  infotainment       String?
+  screen_size        String?
+  instrument_cluster String?
+  headroom_front     String?
+  headroom_rear      String?
+  legroom_front      String?
+  legroom_rear       String?
+  cargo_volume       String?
+  cargo_max          String?
+}
+
+type SafetySpecs {
+  ncap_rating      String?  // GNCAP / EURO NCAP
+  airbags          Int?
+  abs              Boolean?
+  ebd              Boolean?
+  esc              Boolean?
+  tcs              Boolean?
+  blind_spot       Boolean?
+  lane_assist      Boolean?
+  adaptive_cruise  Boolean?
+  parking_sensors  String?  // front | rear | both
+  reverse_camera   Boolean?
+  camera_360       Boolean?
+  autonomous_level String?  // L0–L4
+}
+
+type WheelSpecs {
+  front               String?  // tyre size e.g. 215/60 R17
+  rear                String?
+  wheel_type          String?  // alloy | steel
+  spare               String?  // full-size | stepney | none
+  pressure_monitoring Boolean?
+}
+
+type FeatureSpecs {
+  exterior        String[]
+  interior        String[]
+  comfort         String[]
+  entertainment   String[]
+  connectivity    String[]
+  convenience     String[]
+  safety_features String[]
+  adas_features   String[]
 }

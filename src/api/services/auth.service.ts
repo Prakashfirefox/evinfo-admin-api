@@ -1,5 +1,6 @@
 // src/services/auth.service.ts
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { encrypt } from "../utils/crypto.util";
@@ -8,6 +9,9 @@ import AppError from "../core/error-handler";
 import { ERROR_MESSAGE } from "../constants/index";
 import { auth } from "express-openid-connect";
 import prisma from "../../db/client";
+import config from "../../config/config";
+import { emailService } from "../utils/email/email.service";
+import { forgotPasswordTemplate } from "../utils/email/templates/forgot-password.template";
 
 dotenv.config();
 
@@ -228,7 +232,7 @@ export class AuthService {
         ]
       };
     }
-
+    console.log("User Query WHERE:", JSON.stringify(where, null, 2));
     // Fetch rows
     const users = await prisma.users.findMany({
       where,
@@ -382,6 +386,71 @@ export class AuthService {
       message: "User soft deleted successfully",
       deletedAt: new Date(),
     };
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await prisma.users.findFirst({
+      where: { email, is_deleted: false },
+    });
+
+    // Always resolve without error to avoid email enumeration attacks
+    if (!user) return;
+
+    // Generate a cryptographically random token, store its SHA-256 hash in DB
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(
+      Date.now() + config.PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000
+    );
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        password_reset_token: hashedToken,
+        password_reset_token_expiry: expiresAt,
+      },
+    });
+
+    const resetLink = `${config.WEBSITE_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
+    const fullName = user.full_name || user.first_name || 'User';
+    const html = forgotPasswordTemplate(fullName, resetLink, config.PASSWORD_RESET_EXPIRY_MINUTES);
+
+    await emailService.send({
+      to: email,
+      subject: 'Reset your EVinfo password',
+      html,
+    });
+  }
+
+  async resetPassword(email: string, rawToken: string, newPassword: string): Promise<void> {
+    const user = await prisma.users.findFirst({
+      where: { email, is_deleted: false },
+    });
+
+    if (!user || !user.password_reset_token || !user.password_reset_token_expiry) {
+      throw new AppError(ERROR_MESSAGE.PASSWORD_RESET_TOKEN_INVALID, {}, 400);
+    }
+
+    if (new Date() > user.password_reset_token_expiry) {
+      throw new AppError(ERROR_MESSAGE.PASSWORD_RESET_TOKEN_EXPIRED, {}, 400);
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    if (hashedToken !== user.password_reset_token) {
+      throw new AppError(ERROR_MESSAGE.PASSWORD_RESET_TOKEN_INVALID, {}, 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        password_reset_token: null,
+        password_reset_token_expiry: null,
+        updated_at: new Date(),
+      },
+    });
   }
 
   async updateUserStatus(id: string, status: string, authUser: any) {

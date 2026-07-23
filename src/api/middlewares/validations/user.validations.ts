@@ -107,3 +107,34 @@ export const updateUserStatus = Joi.object({
       "any.required": "Status is required",
     }),
 });
+
+export const forgotPasswordValidation = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.email': 'A valid email address is required',
+    'string.empty': 'Email is required',
+    'any.required': 'Email is required',
+  }),
+}).required();
+
+export const resetPasswordValidation = Joi.object({
+  token: Joi.string().required().messages({
+    'string.empty': 'Reset token is required',
+    'any.required': 'Reset token is required',
+  }),
+  email: Joi.string().email().required().messages({
+    'string.email': 'A valid email address is required',
+    'string.empty': 'Email is required',
+    'any.required': 'Email is required',
+  }),
+  new_password: Joi.string()
+    .min(8)
+    .max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/)
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain uppercase, lowercase, number, and special character',
+      'string.min': 'Password must be at least 8 characters',
+      'string.empty': 'New password is required',
+      'any.required': 'New password is required',
+    }),
+}).required();

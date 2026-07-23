@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(grep -n \"Joi\\\\.\" src/api/middlewares/validations/*.ts)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npx --prefix \"D:\\\\Evvo Technology\\\\Project\\\\github\" tsc --noEmit)",
+      "Bash(npx prisma:*)",
+      "Bash(find 'D:/Evvo Technology/Project/github/src' -name *.css -o -name index.tsx -o -name App.css)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Remove-Item \"D:\\\\Evvo Technology\\\\Project\\\\evinfo-api\\\\src\\\\api\\\\interfaces\\\\hospital.interface.ts\" -Force)",
+      "Bash(Remove-Item \"D:\\\\Evvo Technology\\\\Project\\\\evinfo-api\\\\src\\\\api\\\\interfaces\\\\provider.interface.ts\" -Force)",
+      "Bash(Remove-Item \"D:\\\\Evvo Technology\\\\Project\\\\evinfo-api\\\\src\\\\api\\\\interfaces\\\\patient.interface.ts\" -Force)",
+      "Bash(Remove-Item \"D:\\\\Evvo Technology\\\\Project\\\\evinfo-api\\\\src\\\\api\\\\interfaces\\\\batch.interface.ts\" -Force)",
+      "Bash(Remove-Item \"D:\\\\Evvo Technology\\\\Project\\\\evinfo-api\\\\src\\\\api\\\\interfaces\\\\work-item.interface.ts\" -Force)",
+      "Bash(npm ls *)",
+      "Bash(npm install *)",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(npm start *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3007/)",
+      "Bash(curl -s http://localhost:3007/api-docs -o /dev/null -w \"docs: %{http_code}\\\\n\")",
+      "Bash(curl -s -o /dev/null -w \"api/v1: %{http_code}\\\\n\" http://localhost:3007/api/v1/)",
+      "Bash(curl -s http://localhost:3007/api-docs.json -o /dev/null -w \"swagger json: %{http_code}\\\\n\")",
+      "Bash(xargs grep *)",
+      "Bash(cd /d/Prakash/evinfo/evvo-info-admin && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E \"vehicles/VehicleFormModal|variants/VariantFormModal|variants/types|vehicles/Vehicles.tsx\" | head -40)",
+      "Read(//d/Prakash/evinfo/evvo-info-admin/**)",
+      "Read(//d/Prakash/evinfo/**)",
+      "Bash(npm -v)",
+      "Bash(command -v chromium-cli)",
+      "Bash(command -v chrome chromium google-chrome)",
+      "Bash('/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --hide-scrollbars --virtual-time-budget=8000 --window-size=1440,1000 '--screenshot=D:\\\\Prakash\\\\evinfo\\\\evinfo-website\\\\shot-home.png' http://localhost:3000)",
+      "Bash(PORT=3003 BROWSER=none CI=false npm start)",
+      "Bash('/c/Program Files/Google/Chrome/Application/chrome.exe' --headless=new --disable-gpu --hide-scrollbars --virtual-time-budget=9000 --window-size=1440,1000 '--screenshot=D:\\\\Prakash\\\\evinfo\\\\evvo-info-admin\\\\shot-admin.png' http://localhost:3003)",
+      "Bash(curl -s http://localhost:3003)",
+      "Bash(node .claude/skills/run-evinfo-website/driver.mjs smoke http://localhost:3000 / /cars /reviews /blogs /compare /about /contact)",
+      "Bash(node .claude/skills/run-evinfo-website/driver.mjs shot http://localhost:3000/cars \".claude/skills/run-evinfo-website/example-cars.png\")",
+      "Bash(node .claude/skills/run-evinfo-website/driver.mjs smoke http://localhost:3000 \"\" cars reviews blogs compare about contact)"
+    ]
+  }
+}
