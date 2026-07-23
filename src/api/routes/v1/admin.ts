@@ -30,7 +30,7 @@ router.post(ROUTE.AUTH_GET_ALL_USER, authenticateJWT, validateRequest(UserValida
 router.patch(ROUTE.AUTH_UPDATE_USER_STATUS, authenticateJWT, validateRequest(UserValidations.updateUserStatus), adminController.updateUserStatus);
 
 //Blogs Routes
-router.post(ROUTE.BLOG_CREATE, authenticateJWT, validateRequest(OrganizationValidations.createOrganizationValidation), BlogsController.createBlog);
+router.post(ROUTE.BLOG_CREATE, authenticateJWT, validateRequest(OrganizationValidations.createBlogValidation), BlogsController.createBlog);
 router.get(ROUTE.BLOG_GET, authenticateJWT,  BlogsController.getBlogById);
 router.put(ROUTE.BLOG_UPDATE, authenticateJWT,  BlogsController.updateBlog);
 router.post(ROUTE.BLOG_GET_ALL,  BlogsController.getAllBlogs);
