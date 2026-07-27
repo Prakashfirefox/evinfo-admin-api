@@ -15,8 +15,27 @@ dotenv.config();
 const app = express();
 const server = require("http").createServer(app);
 
+// Allowed CORS origins come from the CORS_ORIGINS env var: a comma-separated
+// list that is split into an array and each entry trimmed. Falls back to the
+// local dev origins when the var is unset.
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  "http://localhost:3000,http://localhost:3001,http://localhost:3002"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const corsOptions: cors.CorsOptions = {
-  origin: ["http://localhost:3001", "http://localhost:3000","http://localhost:3002"],
+  origin: (origin, callback) => {
+    // Allow requests with no Origin (curl, mobile apps, server-to-server)
+    // and any origin present in the allow-list.
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    }
+  },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "*"
